@@ -48,4 +48,7 @@ backend.add(import('@backstage/plugin-techdocs-backend/alpha'));
 backend.add(import('@backstage/plugin-signals-backend'));
 backend.add(import('@backstage/plugin-notifications-backend'));
 
+// POC scalprum plugin
+backend.add(import('@backstage/plugin-scalprum-plugin-backend'));
+
 backend.start();

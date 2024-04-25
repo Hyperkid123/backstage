@@ -1,21 +1,24 @@
 {
   "name": "example-backend-next",
   "version": "0.0.25",
-  "main": "dist/index.cjs.js",
-  "types": "src/index.ts",
-  "license": "Apache-2.0",
-  "private": true,
   "backstage": {
     "role": "backend"
   },
+  "private": true,
+  "keywords": [
+    "backstage"
+  ],
   "homepage": "https://backstage.io",
   "repository": {
     "type": "git",
     "url": "https://github.com/backstage/backstage",
     "directory": "packages/backend-next"
   },
-  "keywords": [
-    "backstage"
+  "license": "Apache-2.0",
+  "main": "dist/index.cjs.js",
+  "types": "src/index.ts",
+  "files": [
+    "dist"
   ],
   "scripts": {
     "build": "backstage-cli package build",
@@ -49,6 +52,7 @@
     "@backstage/plugin-proxy-backend": "workspace:^",
     "@backstage/plugin-scaffolder-backend": "workspace:^",
     "@backstage/plugin-scaffolder-backend-module-github": "workspace:^",
+    "@backstage/plugin-scalprum-plugin-backend": "workspace:^",
     "@backstage/plugin-search-backend": "workspace:^",
     "@backstage/plugin-search-backend-module-catalog": "workspace:^",
     "@backstage/plugin-search-backend-module-explore": "workspace:^",
@@ -59,8 +63,5 @@
   },
   "devDependencies": {
     "@backstage/cli": "workspace:^"
-  },
-  "files": [
-    "dist"
-  ]
+  }
 }
