@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ModuleOptions, WebpackPluginInstance } from 'webpack';
+import { ModuleOptions, WebpackPluginInstance, container } from 'webpack';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { svgrTemplate } from '../svgrTemplate';
 import ReactRefreshPlugin from '@pmmmwh/react-refresh-webpack-plugin';
@@ -27,6 +27,75 @@ type Transforms = {
 type TransformOptions = {
   isDev: boolean;
   isBackend?: boolean;
+};
+
+export const sharedModules = {
+  /**
+   * Mandatory singleton packages for sharing
+   */
+  react: {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  'react-dom': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  'react-router-dom': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  'react-router': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  '@backstage/version-bridge': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  '@backstage/core-app-api': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  '@backstage/core-plugin-api': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  '@backstage/frontend-plugin-api': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  '@scalprum/react-core': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  '@openshift/dynamic-plugin-sdk': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  /**
+   * The following two packages are required to be shared as singletons to enable UI theming
+   */
+  '@material-ui/core/styles': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
+  '@material-ui/styles': {
+    singleton: true,
+    requiredVersion: '*',
+    eager: true,
+  },
 };
 
 export const transforms = (options: TransformOptions): Transforms => {
@@ -192,6 +261,20 @@ export const transforms = (options: TransformOptions): Transforms => {
   ];
 
   const plugins = new Array<WebpackPluginInstance>();
+
+  // configure the shell module federation
+  if (!isBackend) {
+    // @module-federation/enhanced plugin support for Scalprum is current under review
+    // For POC the native webpack container.ModuleFederationPlugin will do
+    plugins.push(
+      new container.ModuleFederationPlugin({
+        name: 'backstage-shell',
+        library: { type: 'global', name: 'backstage-shell' },
+        filename: 'backstage-shell.[contenthash].js',
+        shared: sharedModules,
+      }),
+    );
+  }
 
   if (isDev) {
     if (!isBackend) {
