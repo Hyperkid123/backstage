@@ -15,7 +15,10 @@
  */
 
 import '@backstage/cli/asset-types';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import app from './App';
+import { ScalprumProvider, ScalprumProviderProps } from '@scalprum/react-core';
+import { AppsConfig } from '@scalprum/core';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(app);

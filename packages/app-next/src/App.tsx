@@ -15,10 +15,9 @@
  */
 
 import React from 'react';
-import { createApp } from '@backstage/frontend-app-api';
+import { CreateAppFeatureLoader, createApp } from '@backstage/frontend-app-api';
 import { pagesPlugin } from './examples/pagesPlugin';
 import notFoundErrorPage from './examples/notFoundErrorPageExtension';
-import userSettingsPlugin from '@backstage/plugin-user-settings/alpha';
 import homePlugin, {
   titleExtensionDataRef,
 } from '@backstage/plugin-home/alpha';
@@ -28,6 +27,7 @@ import {
   createExtension,
   createApiExtension,
   createExtensionOverrides,
+  FrontendFeature,
 } from '@backstage/frontend-plugin-api';
 import techdocsPlugin from '@backstage/plugin-techdocs/alpha';
 import appVisualizerPlugin from '@backstage/plugin-app-visualizer';
@@ -48,6 +48,13 @@ import {
 } from '@backstage/integration-react';
 import { createSignInPageExtension } from '@backstage/frontend-plugin-api';
 import { SignInPage } from '@backstage/core-components';
+import {
+  processManifest,
+  getModule,
+  initialize,
+  AppsConfig,
+} from '@scalprum/core';
+import { ScalprumProviderProps } from '@scalprum/react-core';
 
 /*
 
@@ -114,13 +121,85 @@ const collectedLegacyPlugins = convertLegacyApp(
   </FlatRoutes>,
 );
 
+const DEFAULT_MODULE_NAME = 'pluginEntry';
+
+/**
+ * This would be ideally a provider extension (similar to router)
+ * Config comes from backend
+ */
+const remoteConfig: AppsConfig<{ assetsLocation: string }> = {
+  'dynamic-backstage.plugin-user-settings': {
+    name: 'dynamic-backstage.plugin-user-settings',
+    manifestLocation:
+      'http://127.0.0.1:7007/api/scalprum-plugin/assets/dynamic-backstage.plugin-user-settings/dist/plugin-manifest.json',
+    assetsLocation:
+      'http://127.0.0.1:7007/api/scalprum-plugin/assets/dynamic-backstage.plugin-user-settings/dist/',
+  },
+};
+
+const pluginSDKOptions: ScalprumProviderProps['pluginSDKOptions'] = {
+  pluginLoaderOptions: {
+    transformPluginManifest: manifest => {
+      return {
+        ...manifest,
+        loadScripts: manifest.loadScripts.map(script => {
+          return `${remoteConfig[manifest.name].assetsLocation}${script}`;
+        }),
+      };
+    },
+  },
+};
+
+/**
+ * Creating scalprum like this will not provide all the react bindings!
+ * It is recommended to use the ScalprumProvider component
+ * That way the React components and hooks abstractions from SDK plugin will be accessible
+ * Without the react binding, lower level API will has to be used directly
+ */
+const scalprum = initialize({
+  appsConfig: remoteConfig,
+  pluginLoaderOptions: pluginSDKOptions.pluginLoaderOptions,
+});
+
+const remoteLoaders: CreateAppFeatureLoader[] = Object.values(
+  scalprum.appsConfig,
+).map(config => {
+  return {
+    getLoaderName() {
+      return config.name;
+    },
+    load: async () => {
+      if (!config.manifestLocation) {
+        throw new Error('No manifestLocation provided');
+      }
+      await processManifest(
+        config.manifestLocation,
+        config.name,
+        DEFAULT_MODULE_NAME,
+      );
+      const feature = await getModule<FrontendFeature>(
+        config.name,
+        DEFAULT_MODULE_NAME,
+      );
+      return {
+        // Do we want to separate the features loading? Or merge it all into one loader?
+        features: [feature],
+      };
+    },
+  };
+});
+
 const app = createApp({
   features: [
     pagesPlugin,
     techdocsPlugin,
-    userSettingsPlugin,
+    /**
+     * Disable the "static" user settings plugin
+     */
+    // userSettingsPlugin,
     homePlugin,
     appVisualizerPlugin,
+    ...remoteLoaders,
     ...collectedLegacyPlugins,
     createExtensionOverrides({
       extensions: [

@@ -9,16 +9,12 @@ app:
       org.catalogIndex: catalog.catalogIndex
 
   extensions:
-    # - apis.plugin.graphiql.browse.gitlab: true
-    - graphiql-endpoint:graphiql/gitlab: true
-
     # Entity page cards
     - entity-card:catalog/about
     - entity-card:catalog/labels
     - entity-card:catalog/links:
         config:
           filter: kind:component has:links
-    - entity-card:linguist/languages
     - entity-card:catalog-graph/relations:
         config:
           height: 300
